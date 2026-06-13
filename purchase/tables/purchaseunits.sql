@@ -40,3 +40,11 @@ ALTER TABLE ONLY public.purchaseunits
 
 -- DEFAULT (sequence linkage): purchaseunits unit_id
 ALTER TABLE ONLY public.purchaseunits ALTER COLUMN unit_id SET DEFAULT nextval('public.purchaseunits_unit_id_seq'::regclass);
+
+
+-- ─────────────────────────────────────────────────
+-- COMMENTS
+-- ─────────────────────────────────────────────────
+
+COMMENT ON COLUMN public.purchaseunits.serial_comment IS 'Optional comment for this serial number (informational only, does not affect accounting, inventory valuation, or ledger postings)';
+

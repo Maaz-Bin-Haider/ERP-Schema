@@ -38,11 +38,6 @@ ALTER TABLE ONLY public.stockmovements
     ADD CONSTRAINT stockmovements_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.items(item_id);
 
 
---
--- PostgreSQL database dump complete
---
-
-\unrestrict qZR7GopBRfZiHHhak9tOaLeN4k9xOyoH1ONaKWoWUTQtBBtbNWTA5HdPk4VTP3O
 
 
 -- DEFAULT (sequence linkage): stockmovements movement_id
