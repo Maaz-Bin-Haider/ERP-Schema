@@ -1,0 +1,549 @@
+/* ============================================================
+   ACCOUNTS / STOCK / PROFIT REPORTS — Shared Stylesheet
+   Light theme throughout. Clean compact form layout.
+   ============================================================ */
+
+/* ───── WRAPPER ───── */
+.reports-wrapper {
+  display: flex;
+  min-height: calc(100vh - 5rem);
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* ───── LEFT PANEL  ·  LIGHT ───── */
+.left-panel {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--bg-surface);               /* white */
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.65rem;
+}
+
+.left-panel h3 {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  margin: 0 0 0.5rem 0.3rem;
+}
+
+.report-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.report-buttons::-webkit-scrollbar { width: 3px; }
+.report-buttons::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+
+.report-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 0.48rem 0.65rem;
+  border-radius: var(--radius-md);
+  width: 100%;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.79rem;
+  font-weight: 400;
+  text-align: left;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.report-btn i { font-size: 0.72rem; opacity: 0.65; flex-shrink: 0; transition: opacity 0.15s; }
+
+.report-btn:hover {
+  background: var(--gray-100);
+  color: var(--text-primary);
+}
+.report-btn:hover i { opacity: 1; }
+
+.report-btn.active {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary);
+  font-weight: 600;
+  border-left: 2px solid var(--brand-primary);
+  padding-left: calc(0.65rem - 2px);
+}
+.report-btn.active i { opacity: 1; color: var(--brand-primary); }
+
+/* ───── RIGHT PANEL ───── */
+.right-panel {
+  flex: 1;
+  padding: 1.25rem 1.4rem;
+  background: var(--bg-surface-alt);
+  overflow-x: auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* ───── FORM FILTER CARD ───── */
+#report-form-container,
+.form-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+/* ── COMPACT FILTER ROW — the main fix ── */
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* key: fields are auto-width, not stretch-full */
+  flex: 0 0 auto;
+}
+
+.filter-field label {
+  font-size: 0.69rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* All date / text inputs inside the filter form — compact width */
+.filter-field input[type="date"],
+.filter-field input[type="text"],
+#report-form-container input[type="date"],
+#report-form-container input[type="text"],
+.form-row input[type="date"],
+.form-row input[type="text"],
+.form-row-inline input[type="date"] {
+  width: 148px;                /* fixed compact width for date fields */
+  padding: 0.45rem 0.65rem;
+  border: 1.5px solid var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+/* Party / item search — a bit wider */
+#report-form-container #search_name,
+#report-form-container #item_name,
+#report-form-container #item_detail_name {
+  width: 240px;
+}
+
+#report-form-container input[type="date"]:focus,
+#report-form-container input[type="text"]:focus,
+.form-row input[type="date"]:focus,
+.form-row input[type="text"]:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
+  background: var(--bg-surface);
+}
+
+/* Legacy .form-row / .form-row-inline used by stock/profit JS — keep working */
+.form-row         { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.form-row-inline  { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.date-group       { display: flex; flex-direction: column; gap: 4px; }
+.date-group label { font-size: 0.69rem; font-weight: 600; text-transform: uppercase;
+                    letter-spacing: 0.06em; color: var(--text-tertiary); margin: 0; }
+
+/* ───── GENERATE BUTTON ───── */
+.generate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--brand-primary);
+  color: #fff;
+  border: none;
+  padding: 0 1rem;
+  height: 34px;                /* matches input height */
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+  box-shadow: 0 2px 6px rgba(37,99,235,0.22);
+  align-self: flex-end;
+}
+.generate-btn:hover  { background: var(--brand-primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+.generate-btn:active { transform: translateY(0); }
+
+/* ───── REPORT TOOLBAR (search + downloads) ───── */
+.report-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* Filter search bar */
+.table-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.table-search-wrap {
+  position: relative;
+  max-width: 280px;
+  flex: 1;
+}
+
+.table-search-wrap i {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+#tableSearch {
+  width: 100%;
+  padding: 0.4rem 0.7rem 0.4rem 2rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.81rem;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+#tableSearch:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--input-focus-ring); }
+
+.table-row-count {
+  font-size: 0.73rem;
+  color: var(--text-tertiary);
+  background: var(--gray-100);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* Download buttons */
+.table-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 10px;}
+
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-color);
+  padding: 0.36rem 0.8rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+.btn-download:hover        { border-color: #1976d2; color: #1976d2; background: #eff6ff; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-download.btn-csv      { color: var(--brand-success); border-color: rgba(5,150,105,0.3); }
+.btn-download.btn-csv:hover{ border-color: var(--brand-success); background: var(--brand-success-light); }
+
+/* ───── TABLE CONTAINER  ·  LIGHT ───── */
+.table-container {
+  background: var(--bg-surface);             /* white */
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+}
+
+/* ───── REPORT TABLE ───── */
+#reportTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.81rem;
+  font-family: var(--font-sans);
+}
+
+#reportTable thead tr { background: var(--gray-800); }
+
+#reportTable thead th {
+  padding: 8px 11px;
+  color: #e2e8f0;
+  font-size: 0.69rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  border-bottom: none;
+  text-align: left;
+}
+
+#reportTable tbody td {
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+
+#reportTable tbody tr:last-child td       { border-bottom: none; }
+#reportTable tbody tr:nth-child(even)     { background: var(--gray-50); }
+#reportTable tbody tr:hover               { background: var(--brand-primary-light) !important; }
+#reportTable tbody tr.filtered-out        { display: none; }
+
+.no-data {
+  text-align: center;
+  color: var(--text-tertiary);
+  padding: 2.5rem 1rem;
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+/* ───── AUTOCOMPLETE ───── */
+.autocomplete-container { position: relative; flex: 0 0 auto; }
+
+#suggestions,
+#suggestions_detail,
+.suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999;
+  display: none;
+  box-shadow: var(--shadow-lg);
+}
+
+#suggestions div,
+#suggestions_detail div,
+.suggestion-item {
+  padding: 7px 11px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.13s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#suggestions div:last-child, .suggestion-item:last-child { border-bottom: none; }
+#suggestions div:hover, .suggestion-item:hover           { background: var(--brand-primary-light); color: var(--brand-primary); }
+.suggestion-item.highlight                               { background: var(--brand-primary-light); color: var(--brand-primary); }
+
+/* ───── ENTRY-BY PILL ───── */
+.col-entry-by { white-space: nowrap; width: 1%; }
+
+.entry-by-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.68rem; font-weight: 600;
+  color: #374151; background: #f0f9ff; border: 1px solid #bae6fd;
+  border-radius: 20px; padding: 2px 8px; white-space: nowrap;
+}
+.entry-by-pill .fa-user-pen       { color: #0284c7; font-size: 0.6rem; }
+.entry-by-pill.entry-by-unknown   { color: #9ca3af; background: #f9fafb; border-color: #e5e7eb; }
+
+/* ───── RESPONSIVE ───── */
+@media (max-width: 900px) {
+  .reports-wrapper  { flex-direction: column; border-radius: var(--radius-lg); }
+  .left-panel       { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 0.6rem; }
+  .left-panel h3    { display: none; }
+  .report-buttons   { flex-direction: row; flex-wrap: wrap; gap: 5px; overflow-y: visible; }
+  .report-btn       { flex: 0 0 auto; width: auto; padding: 0.36rem 0.65rem; font-size: 0.76rem; }
+  .report-btn.active{ border-left: none; border-bottom: 2px solid var(--brand-primary); padding-left: 0.65rem; }
+  .right-panel      { padding: 0.9rem; }
+}
+
+@media (max-width: 600px) {
+  .filter-form                                { flex-direction: column; align-items: stretch; }
+  .filter-field input[type="date"],
+  .filter-field input[type="text"],
+  #report-form-container #search_name,
+  #report-form-container #item_name,
+  #report-form-container #item_detail_name    { width: 100%; }
+  .generate-btn                               { width: 100%; justify-content: center; }
+  .table-search-wrap                          { max-width: 100%; }
+}
+
+@media print {
+  .left-panel, .report-toolbar,
+  #report-form-container                      { display: none !important; }
+  .reports-wrapper                            { border: none; box-shadow: none; }
+  .right-panel                                { padding: 0; }
+}
+
+/* ───── Set Opening — opening cash card ───── */
+.opening-current {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.opening-current .amount {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.opening-status {
+  font-size: 0.8rem;
+  margin-left: 6px;
+  min-height: 1em;
+}
+.opening-status.ok  { color: var(--brand-success); }
+.opening-status.err { color: var(--brand-danger, #dc2626); }
+.opening-hint {
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+/* ===================== Month-End Close specific ===================== */
+/* Mirrors the Owner Equity / shared section look. */
+
+.mc-hint {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  background: var(--brand-primary-light, #ecfdf5);
+  border-radius: var(--radius-md, 8px);
+  padding: 10px 12px;
+  margin: 14px 0 18px;
+  line-height: 1.55;
+}
+
+/* Summary stat cards (top of right panel) — two cards */
+.mc-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.mc-stat {
+  background: #fff;
+  border: 1px solid var(--border-color, #e8edf3);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.mc-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, #94a3b8);
+}
+.mc-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #0f172a);
+}
+.mc-stat-in { color: #15803d; }
+.mc-stat-net {
+  background: var(--brand-primary-light, #eff6ff);
+  border-color: var(--brand-primary, #2563eb);
+}
+.mc-stat-net .mc-stat-value { color: var(--brand-primary, #2563eb); }
+
+@media (max-width: 720px) {
+  .mc-stats { grid-template-columns: 1fr; }
+}
+
+.mc-list-title { font-size: 0.95rem; margin: 6px 0 10px; }
+.mc-list-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 18px 0 10px; flex-wrap: wrap;
+}
+.mc-list-header .mc-list-title { margin: 0; }
+
+.mc-table-wrap { overflow-x: auto; }
+.mc-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.mc-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-tertiary);
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--border-color, #e2e8f0);
+  white-space: nowrap;
+}
+.mc-table td { padding: 9px 10px; border-bottom: 1px solid var(--border-color, #eef2f7); }
+.mc-table td.mc-num, .mc-table th.mc-num { text-align: right; font-variant-numeric: tabular-nums; }
+.mc-empty { text-align: center; color: #94a3b8; padding: 18px 0; }
+
+.mc-amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.mc-amt-pos { color: #166534; }
+.mc-amt-neg { color: #b91c1c; }
+
+/* Close button on open rows */
+.mc-close-btn {
+  border: none;
+  background: var(--brand-primary, #2563eb);
+  color: #fff;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mc-close-btn:hover { filter: brightness(0.95); }
+.mc-close-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Reverse (un-close) button on closed rows */
+.mc-reverse {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+.mc-reverse:hover { color: #dc2626; background: #fef2f2; }

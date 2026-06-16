@@ -1,0 +1,84 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Month-End Close{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/month_close.css' %}">
+{% endblock SeperateCssFile %}
+
+{% block body %}
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.1rem;">
+  <div style="width:36px;height:36px;background:var(--brand-primary-light);border-radius:var(--radius-md);
+              display:flex;align-items:center;justify-content:center;color:var(--brand-primary);font-size:0.95rem;flex-shrink:0;">
+    <i class="fa-solid fa-calendar-check"></i>
+  </div>
+  <div>
+    <h2 style="margin:0;font-size:1.2rem;font-weight:700;letter-spacing:-0.02em;">Month-End Close</h2>
+    <p style="margin:0;font-size:0.78rem;color:var(--text-tertiary);">Record each month's earned profit into Retained Earnings</p>
+  </div>
+</div>
+
+<div class="reports-wrapper">
+  <section class="right-panel">
+
+    <!-- Summary stat cards -->
+    <div class="mc-stats">
+      <div class="mc-stat">
+        <span class="mc-stat-label">Profit Recognised</span>
+        <span class="mc-stat-value mc-stat-in" id="mc-total">—</span>
+      </div>
+      <div class="mc-stat mc-stat-net">
+        <span class="mc-stat-label">Retained Earnings Balance</span>
+        <span class="mc-stat-value" id="mc-re">—</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+
+      <!-- Open months awaiting close -->
+      <h3 class="mc-list-title">Open months (not yet closed)</h3>
+      <div class="mc-table-wrap">
+        <table class="mc-table">
+          <thead><tr><th>Month</th><th>Earned profit (preview)</th><th></th></tr></thead>
+          <tbody id="mc-open-tbody">
+            <tr><td colspan="3" class="mc-empty">Nothing to close</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mc-hint">
+        Closing a month posts <strong>Debit Sales Revenue / Credit Cost of Goods Sold</strong> and moves the
+        earned profit (Sales − COGS − Expenses) into <strong>Retained Earnings</strong> — no cash is involved,
+        and your Net Position is unchanged. Withdraw accumulated profit any time from the
+        <strong>Owner Equity</strong> page (choose Retained Earnings).
+      </p>
+
+      <!-- Closed months log -->
+      <div class="mc-list-header">
+        <h3 class="mc-list-title">Closed months</h3>
+        <div class="table-actions">
+          <button type="button" id="mc-download-pdf" class="btn-download"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+          <button type="button" id="mc-download-csv" class="btn-download btn-csv"><i class="fa-solid fa-file-csv"></i> CSV</button>
+        </div>
+      </div>
+      <div class="mc-table-wrap">
+        <table class="mc-table">
+          <thead><tr><th>Month</th><th>Sales</th><th>COGS</th><th>Expenses</th><th>Profit</th><th>Closed on</th><th></th></tr></thead>
+          <tbody id="mc-closed-tbody">
+            <tr><td colspan="7" class="mc-empty">No months closed yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="{% static 'js/month_close.js' %}"></script>
+
+{% endblock body %}
