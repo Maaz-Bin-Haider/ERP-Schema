@@ -1,0 +1,87 @@
+/* ============================================================
+   CONTRA ENTRY — page-specific styles
+   (shared shell comes from payment.css)
+   ============================================================ */
+
+/* From -> To row with an arrow between the two party fields */
+.contra-parties {
+  align-items: flex-start;
+}
+
+.contra-parties .form-group {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.contra-arrow {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-top: 18px;
+  color: var(--accent, #2563eb);
+  font-size: 1.1rem;
+  opacity: 0.85;
+  padding: 0 2px;
+}
+
+.contra-hint {
+  font-weight: 400;
+  font-size: 0.72rem;
+  color: var(--text-tertiary, #94a3b8);
+  margin-left: 4px;
+}
+
+/* suggestion dropdown box (matches the Payments page look) */
+.suggestions-box {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg-surface, #fff);
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg, 0 8px 20px rgba(15, 23, 42, 0.12));
+}
+
+/* individual party rows inside the dropdown */
+.suggestions-box .suggestion-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-primary, #1e293b);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  transition: background var(--transition, 0.15s ease);
+}
+
+.suggestions-box .suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestions-box .suggestion-item:hover,
+.suggestions-box .suggestion-item.highlight {
+  background: var(--brand-primary-light, #eff6ff);
+  color: var(--brand-primary, #2563eb);
+}
+
+:root.dark-mode .suggestions-box {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+}
+
+:root.dark-mode .suggestions-box .suggestion-item:hover,
+:root.dark-mode .suggestions-box .suggestion-item.highlight {
+  background: rgba(37, 99, 235, 0.15);
+  color: var(--brand-primary, #60a5fa);
+}
+
+/* On narrow screens stack the two parties and rotate the arrow */
+@media (max-width: 640px) {
+  .contra-parties { flex-direction: column; }
+  .contra-arrow {
+    margin: 2px 0;
+    transform: rotate(90deg);
+    align-self: center;
+  }
+}

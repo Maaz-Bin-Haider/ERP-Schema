@@ -1,0 +1,194 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Contra Entry{% endblock title %}
+
+{% block SeperateCssFile %}
+  <link rel="stylesheet" href="{% static 'css/payment.css' %}">
+  <link rel="stylesheet" href="{% static 'css/contra.css' %}">
+{% endblock SeperateCssFile %}
+
+
+{% block body %}
+<div class="page-wrapper">
+
+  <!-- ====== PAGE HEADER ====== -->
+  <div class="page-header">
+    <div class="page-title">
+      <div class="page-title-icon">
+        <i class="fa-solid fa-right-left"></i>
+      </div>
+      <div>
+        <h2>Contra Entry</h2>
+        <div id="entryByBadge" style="display:none;" title="Last modified by">
+          <i class="fa-solid fa-user-pen"></i>
+          <span id="entryByName">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="action-btn" id="btnOldContras" title="View last 20 contra entries">
+        <i class="fa-solid fa-clock-rotate-left"></i> History
+      </button>
+      <button class="action-btn" id="btnContrasDateWise" title="Filter by date range">
+        <i class="fa-solid fa-calendar-days"></i> Date-Wise
+      </button>
+      <button class="btn-new-entry" id="btnNewEntry" title="Start a new contra entry (Ctrl+N)" type="button">
+        <i class="fa-solid fa-plus"></i> New
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ====== FORM CARD ====== -->
+  <div class="form-card">
+    <div class="form-status-bar" id="formStatusBar">
+      <div class="status-mode mode-new" id="statusMode">
+        <span class="status-dot"></span>
+        <span id="statusText">New Entry</span>
+      </div>
+      <span class="shortcut-hint">
+        <kbd>Alt</kbd>+<kbd>←</kbd><kbd>→</kbd> browse records &nbsp;·&nbsp; <kbd>Ctrl</kbd>+<kbd>N</kbd> new
+      </span>
+    </div>
+
+    <div class="form-card-body">
+      <form method="post" id="contraForm" autocomplete="off" novalidate>
+        {% csrf_token %}
+
+        <!-- Row 1: Date + Amount -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="contra_date">
+              <i class="fa-regular fa-calendar" style="margin-right:4px;"></i> Date
+            </label>
+            <input type="date" id="contra_date" name="contra_date" value="{{ contra_date }}" required>
+          </div>
+
+          <div class="form-group">
+            <label for="amount">
+              <i class="fa-solid fa-coins" style="margin-right:4px;"></i> Amount
+            </label>
+            <input type="number" id="amount" name="amount" step="0.0001" min="0"
+                   placeholder="0.00" value="{{ amount }}" required>
+          </div>
+        </div>
+
+        <!-- Row 2: From -> To parties -->
+        <div class="form-row contra-parties">
+          <div class="form-group autocomplete-container">
+            <label for="from_search_name">
+              <i class="fa-solid fa-arrow-up-from-bracket" style="margin-right:4px;"></i>
+              From Party <span class="contra-hint">(balance decreases)</span>
+            </label>
+            <input type="text" id="from_search_name" name="from_search_name"
+                   placeholder="Receive from…" autocomplete="off"
+                   data-autocomplete-url="{% url 'parties:autocomplete_party' %}"
+                   value="{{ from_party_name }}">
+            <div id="from_suggestions" class="suggestions-box" style="display:none;"></div>
+            <div id="fromBalanceDisplay" style="display:none;"></div>
+          </div>
+
+          <div class="contra-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+
+          <div class="form-group autocomplete-container">
+            <label for="to_search_name">
+              <i class="fa-solid fa-arrow-down-to-bracket" style="margin-right:4px;"></i>
+              To Party <span class="contra-hint">(balance increases)</span>
+            </label>
+            <input type="text" id="to_search_name" name="to_search_name"
+                   placeholder="Pay to…" autocomplete="off"
+                   data-autocomplete-url="{% url 'parties:autocomplete_party' %}"
+                   value="{{ to_party_name }}">
+            <div id="to_suggestions" class="suggestions-box" style="display:none;"></div>
+            <div id="toBalanceDisplay" style="display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Row 3: Description -->
+        <div class="form-group">
+          <label for="description">
+            <i class="fa-regular fa-note-sticky" style="margin-right:4px;"></i>
+            Description <span style="font-weight:400;color:var(--text-tertiary);">(optional)</span>
+          </label>
+          <textarea id="description" name="description"
+                    placeholder="Add a note or reference for this transfer…">{{ description }}</textarea>
+        </div>
+
+        <div class="btn-row">
+          <button type="submit" name="action" value="submit" class="save-and-update-btn" id="submitBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Contra
+          </button>
+          <button type="submit" name="action" value="delete" class="delete-btn" id="deleteBtn">
+            <i class="fa-solid fa-trash-can"></i> Delete
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <input type="hidden" id="current_contra_id" name="current_id" value="{{ contra_id }}" form="contraForm">
+
+  <!-- ====== NAVIGATION ====== -->
+  <div class="nav-btn-group">
+    <button class="nav-btn" type="button" onclick="navigateContra('previous')" title="Previous record (Alt+←)">
+      <i class="fa-solid fa-chevron-left"></i> Previous
+    </button>
+    <span class="record-id-chip" id="recordIdChip">
+      {% if contra_id %}#{{ contra_id }}{% else %}New{% endif %}
+    </span>
+    <button class="nav-btn" type="button" onclick="navigateContra('next')" title="Next record (Alt+→)">
+      Next <i class="fa-solid fa-chevron-right"></i>
+    </button>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/contra_page.js' %}"></script>
+
+<script>
+  document.getElementById("btnNewEntry").addEventListener("click", clearContraForm);
+
+  function clearContraForm() {
+    document.getElementById("contra_date").valueAsDate = new Date();
+    document.getElementById("from_search_name").value = "";
+    document.getElementById("to_search_name").value = "";
+    document.getElementById("amount").value = "";
+    document.getElementById("description").value = "";
+    document.getElementById("current_contra_id").value = "";
+    document.getElementById("entryByName").textContent = "—";
+    document.getElementById("entryByBadge").style.display = "none";
+    document.getElementById("fromBalanceDisplay").style.display = "none";
+    document.getElementById("toBalanceDisplay").style.display = "none";
+    setFormMode("new");
+    document.getElementById("from_search_name").focus();
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "n") { e.preventDefault(); clearContraForm(); }
+    if (e.altKey && e.key === "ArrowLeft")  { e.preventDefault(); navigateContra("previous"); }
+    if (e.altKey && e.key === "ArrowRight") { e.preventDefault(); navigateContra("next"); }
+  });
+</script>
+
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+      Swal.fire({ title: "Done!", text: "{{ message|escapejs }}", icon: "success", timer: 2500,
+        showConfirmButton: false, timerProgressBar: true, toast: true, position: "top-end" });
+      {% elif message.tags == 'error' %}
+      Swal.fire({ title: "Error", text: "{{ message|escapejs }}", icon: "error", confirmButtonColor: "#dc2626" });
+      {% else %}
+      Swal.fire({ title: "Notice", text: "{{ message|escapejs }}", icon: "info", confirmButtonColor: "#2563eb" });
+      {% endif %}
+    {% endfor %}
+  });
+</script>
+{% endif %}
+
+{% endblock body %}

@@ -1,0 +1,123 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Sales Reports{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/sales_reports.css' %}">
+{% endblock SeperateCssFile %}
+
+{% block body %}
+
+<!-- Page title bar -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.1rem;">
+  <div style="width:36px;height:36px;background:var(--brand-primary-light);border-radius:var(--radius-md);
+              display:flex;align-items:center;justify-content:center;color:var(--brand-primary);font-size:0.95rem;flex-shrink:0;">
+    <i class="fa-solid fa-chart-line"></i>
+  </div>
+  <div>
+    <h2 style="margin:0;font-size:1.2rem;font-weight:700;letter-spacing:-0.02em;">Sales Reports</h2>
+    <p style="margin:0;font-size:0.78rem;color:var(--text-tertiary);">Summary, profitability, trends &amp; registers</p>
+  </div>
+</div>
+
+<div class="reports-wrapper">
+
+  <!-- ====== LEFT PANEL ====== -->
+  <aside class="left-panel">
+    <h3>Reports</h3>
+    <div class="report-buttons" id="sr-report-buttons">
+      {% if perms.auth.can_view_sales_summary %}
+      <button class="report-btn" data-report="summary"><i class="fa-solid fa-gauge-high"></i> Sales Summary</button>{% endif %}
+      {% if perms.auth.can_view_product_profitability %}
+      <button class="report-btn" data-report="product_profitability"><i class="fa-solid fa-box"></i> Product Profitability</button>{% endif %}
+      {% if perms.auth.can_view_customer_profitability %}
+      <button class="report-btn" data-report="customer_profitability"><i class="fa-solid fa-user-tag"></i> Customer Profitability</button>{% endif %}
+      {% if perms.auth.can_view_sales_by_product %}
+      <button class="report-btn" data-report="sales_by_product"><i class="fa-solid fa-boxes-stacked"></i> Sales by Product</button>{% endif %}
+      {% if perms.auth.can_view_sales_by_customer %}
+      <button class="report-btn" data-report="sales_by_customer"><i class="fa-solid fa-users"></i> Sales by Customer</button>{% endif %}
+      {% if perms.auth.can_view_sale_wise_profit %}
+      <button class="report-btn" data-report="sale_wise"><i class="fa-solid fa-receipt"></i> Sale-wise Profit</button>{% endif %}
+      {% if perms.auth.can_view_sales_trend %}
+      <button class="report-btn" data-report="trend"><i class="fa-solid fa-chart-line"></i> Sales Trend Dashboard</button>{% endif %}
+      {% if perms.auth.can_view_invoice_register %}
+      <button class="report-btn" data-report="invoice_register"><i class="fa-solid fa-file-invoice"></i> Invoice Register</button>{% endif %}
+    </div>
+  </aside>
+
+  <!-- ====== RIGHT PANEL ====== -->
+  <section class="right-panel">
+
+    <!-- Report heading -->
+    <div class="sr-head">
+      <h3 id="sr-report-title">Select a report</h3>
+      <p id="sr-report-sub" class="sr-sub"></p>
+    </div>
+
+    <!-- Date-range form -->
+    <div class="sr-form" id="sr-form" style="display:none;">
+      <div class="sr-field">
+        <label for="sr-from">From</label>
+        <input type="date" id="sr-from">
+      </div>
+      <div class="sr-field">
+        <label for="sr-to">To</label>
+        <input type="date" id="sr-to">
+      </div>
+      <div class="sr-field" id="sr-gran-field" style="display:none;">
+        <label for="sr-gran">Group by</label>
+        <select id="sr-gran">
+          <option value="day">Day</option>
+          <option value="week">Week</option>
+          <option value="month" selected>Month</option>
+        </select>
+      </div>
+      <div class="sr-quick" id="sr-quick">
+        <button type="button" data-range="this_month" class="sr-chip active">This month</button>
+        <button type="button" data-range="last_month" class="sr-chip">Last month</button>
+        <button type="button" data-range="this_year" class="sr-chip">This year</button>
+      </div>
+      <button class="generate-btn" id="sr-generate"><i class="fa-solid fa-play"></i> Generate</button>
+    </div>
+
+    <!-- Summary stat cards -->
+    <div id="sr-stats" class="sr-stats" style="display:none;"></div>
+
+    <!-- Chart -->
+    <div id="sr-chart-wrap" class="sr-chart-wrap" style="display:none;">
+      <div class="sr-chart-box" id="sr-chart-box"><canvas id="sr-chart"></canvas></div>
+    </div>
+
+    <!-- Table actions -->
+    <div class="table-actions" id="sr-actions" style="display:none;">
+      <button id="sr-pdf" class="btn-download"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+      <button id="sr-csv" class="btn-download btn-csv"><i class="fa-solid fa-file-csv"></i> CSV</button>
+    </div>
+
+    <!-- Table -->
+    <div class="sr-table-wrap" id="sr-table-wrap" style="display:none;">
+      <table class="sr-table" id="sr-table">
+        <thead id="sr-thead"></thead>
+        <tbody id="sr-tbody"></tbody>
+        <tfoot id="sr-tfoot"></tfoot>
+      </table>
+    </div>
+
+    <!-- Empty / placeholder -->
+    <div id="sr-placeholder" class="sr-placeholder">
+      <i class="fa-solid fa-chart-line"></i>
+      <p>Pick a report on the left, choose a date range, and hit Generate.</p>
+    </div>
+
+  </section>
+</div>
+
+<!-- Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="{% static 'js/sales_reports.js' %}"></script>
+
+{% endblock body %}
