@@ -1,0 +1,153 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Opening Stock{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/opening_stock.css' %}">
+{% endblock SeperateCssFile %}
+
+{% block body %}
+{% csrf_token %}
+
+<!-- Page title bar -->
+<div class="os-titlebar">
+  <div class="os-titlebar-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+  <div>
+    <h2>Opening Stock</h2>
+    <p>Load the stock you already hold at go-live — serial-tracked, costed, and with no vendor payable.</p>
+  </div>
+</div>
+
+<!-- ===== Opening Balance Equity status banner ===== -->
+<div class="os-obe-banner" id="obe-banner" style="display:none;">
+  <div class="os-obe-info">
+    <span class="os-obe-label"><i class="fa-solid fa-scale-balanced"></i> Opening Balance Equity</span>
+    <span class="os-obe-amount" id="obe-amount">—</span>
+    <span class="os-obe-hint" id="obe-hint"></span>
+  </div>
+  {% if can_reclass %}
+  <button type="button" class="os-btn os-btn-ghost" id="reclass-btn" style="display:none;">
+    <i class="fa-solid fa-right-left"></i> Reclassify to Capital
+  </button>
+  {% endif %}
+</div>
+
+<div class="os-grid">
+
+  <!-- ===== Add Opening Stock ===== -->
+  {% if can_create %}
+  <section class="os-card os-form-card">
+    <div class="os-card-head">
+      <h3><i class="fa-solid fa-plus"></i> Add Opening Stock</h3>
+    </div>
+
+    <div class="os-form-top">
+      <div class="os-field">
+        <label for="as_of_date">As-of date</label>
+        <input type="date" id="as_of_date">
+      </div>
+      <div class="os-field os-autocomplete">
+        <label for="vendor_name">Reference vendor <span class="os-opt">(optional)</span></label>
+        <input type="text" id="vendor_name" placeholder="e.g. supplier name…" autocomplete="off"
+               data-autocomplete-url="{% url 'parties:autocomplete_party' %}">
+        <div class="os-suggestions" id="vendor_suggestions" style="display:none;"></div>
+      </div>
+    </div>
+    <p class="os-note">
+      The reference vendor is recorded for your records only — it creates <strong>no payable</strong>.
+      Set what you actually owe a vendor separately, as that party's opening balance.
+    </p>
+
+    <div class="os-items" id="items-container"><!-- item rows injected here --></div>
+
+    <button type="button" class="os-btn os-btn-soft" id="add-item-btn">
+      <i class="fa-solid fa-plus"></i> Add item
+    </button>
+
+    <div class="os-form-foot">
+      <div class="os-total">
+        <span>Total cost</span>
+        <strong id="grand-total">0.00</strong>
+      </div>
+      <button type="button" class="os-btn os-btn-primary" id="save-btn">
+        <i class="fa-solid fa-floppy-disk"></i> Save Opening Stock
+      </button>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== Existing loads ===== -->
+  <section class="os-card os-list-card">
+    <div class="os-card-head">
+      <h3><i class="fa-solid fa-list"></i> Opening Stock Loads</h3>
+      <button type="button" class="os-icon-btn" id="refresh-btn" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+    <div class="os-table-wrap">
+      <table class="os-table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Vendor</th><th class="num">Items</th><th class="num">Units</th>
+            <th class="num">In stock</th><th class="num">Total cost</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="loads-body">
+          <tr><td colspan="7" class="os-empty">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ===== Item row template ===== -->
+<template id="item-row-tpl">
+  <div class="os-item-row">
+    <div class="os-field os-autocomplete os-item-name-wrap">
+      <label>Item</label>
+      <input type="text" class="os-item-name" placeholder="Search item…" autocomplete="off"
+             data-autocomplete-url="{% url 'items:autocomplete_item' %}">
+      <div class="os-suggestions" style="display:none;"></div>
+    </div>
+    <div class="os-field os-cost-wrap">
+      <label>Unit cost</label>
+      <input type="number" class="os-cost" min="0" step="0.01" placeholder="0.00">
+    </div>
+    <div class="os-field os-serials-wrap">
+      <label>Serial numbers <span class="os-opt">(one per line / paste)</span></label>
+      <textarea class="os-serials" rows="2" placeholder="SN001&#10;SN002&#10;SN003"></textarea>
+      <span class="os-serial-count">0 units</span>
+    </div>
+    <div class="os-field os-rowtotal-wrap">
+      <label>Line total</label>
+      <div class="os-rowtotal">0.00</div>
+    </div>
+    <button type="button" class="os-icon-btn os-remove-row" title="Remove"><i class="fa-solid fa-trash"></i></button>
+  </div>
+</template>
+
+<!-- ===== Details modal ===== -->
+<div class="os-modal-overlay" id="details-modal" style="display:none;">
+  <div class="os-modal">
+    <div class="os-modal-head">
+      <h3 id="details-title">Opening Stock</h3>
+      <button type="button" class="os-icon-btn" id="details-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="os-modal-body" id="details-body"></div>
+  </div>
+</div>
+
+<script>
+  window.OS_URLS = {
+    create:     "{% url 'opening_stock:create' %}",
+    list:       "{% url 'opening_stock:list' %}",
+    details:    "{% url 'opening_stock:details' %}",
+    del:        "{% url 'opening_stock:delete' %}",
+    obeStatus:  "{% url 'opening_stock:obe_status' %}",
+    reclassify: "{% url 'opening_stock:reclassify' %}",
+  };
+  window.OS_PERMS = { canDelete: {{ can_delete|yesno:"true,false" }}, canReclass: {{ can_reclass|yesno:"true,false" }} };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/opening_stock_page.js' %}"></script>
+
+{% endblock body %}
