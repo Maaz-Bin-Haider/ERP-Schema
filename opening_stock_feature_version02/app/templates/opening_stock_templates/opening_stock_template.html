@@ -1,0 +1,159 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Opening Stock{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/purchasing_styling.css' %}">
+<link rel="stylesheet" href="{% static 'css/opening_stock.css' %}">
+<style>
+  /* Serial-pair styling (matches Purchase section) */
+  .serial-pair { display:flex; gap:8px; align-items:center; margin-bottom:5px; }
+  .serial-pair input.sn {
+    flex:0 0 160px; font-family:'DM Mono',monospace; font-size:0.82rem; padding:6px 10px;
+    border:1.5px solid #e5e7eb; border-radius:8px; transition:all 0.18s; background:#fff; color:#111827;
+  }
+  .serial-pair input.sn:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,0.1); background:#eff6ff; }
+  .serial-pair input.sn.dup-self    { border-color:#f59e0b; background:#fffbeb; }
+  .serial-pair input.sn.dup-stock   { border-color:#dc2626; background:#fff1f2; }
+  .serial-pair input.sn.dup-existed { border-color:#9333ea; background:#fdf4ff; }
+  .serial-pair input.sn.dup-ok      { border-color:#10b981; background:#f0fdf4; }
+  .serial-pair input.cmt {
+    flex:1; font-size:0.8rem; padding:6px 10px; border:1.5px solid #e5e7eb; border-radius:8px;
+    font-style:italic; color:#4b5563; background:#f9fafb; transition:border-color 0.18s;
+  }
+  .serial-pair input.cmt:focus { outline:none; border-color:#2563eb; background:#fff; }
+  .serial-status-tag { font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+  .tag-ok{background:#dcfce7;color:#15803d;} .tag-dup{background:#fef9c3;color:#92400e;}
+  .tag-stock{background:#fee2e2;color:#dc2626;} .tag-existed{background:#f3e8ff;color:#7e22ce;}
+  .bulk-hint { font-size:0.75rem; color:#9ca3af; margin:0 0 8px; display:flex; align-items:center; gap:5px; }
+  #vendor_suggestions .suggestion-item.highlight,
+  .items_suggestions .suggestion-item.highlight { background:#eff6ff; }
+</style>
+{% endblock SeperateCssFile %}
+
+{% block body %}
+{% csrf_token %}
+
+<div class="os-titlebar">
+  <div class="os-titlebar-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+  <div>
+    <h2>Opening Stock</h2>
+    <p>Load the stock you already hold at go-live — serial-tracked, costed, and with no vendor payable.</p>
+  </div>
+</div>
+
+<div class="os-obe-banner" id="obe-banner" style="display:none;">
+  <div class="os-obe-info">
+    <span class="os-obe-label"><i class="fa-solid fa-scale-balanced"></i> Opening Balance Equity</span>
+    <span class="os-obe-amount" id="obe-amount">—</span>
+    <span class="os-obe-hint" id="obe-hint"></span>
+  </div>
+  {% if can_reclass %}
+  <button type="button" class="os-btn os-btn-ghost" id="reclass-btn" style="display:none;">
+    <i class="fa-solid fa-right-left"></i> Reclassify to Capital
+  </button>
+  {% endif %}
+</div>
+
+<div class="os-grid">
+
+  {% if can_create %}
+  <section class="sale-card os-form-card">
+    <div class="sale-card-body">
+
+      <div class="sale-meta-grid" style="display:grid;grid-template-columns:1fr 220px;gap:14px;margin-bottom:14px;">
+        <div class="sale-field">
+          <label class="sale-field-label"><i class="fa-solid fa-building"></i> Reference vendor <span style="font-weight:400;color:#9ca3af;">(optional — no payable)</span></label>
+          <div class="autocomplete-container">
+            <input type="text" id="search_name" class="sale-input" placeholder="Search vendor name…"
+                   autocomplete="off" data-autocomplete-url="{% url 'parties:autocomplete_party' %}">
+            <div id="vendor_suggestions"></div>
+          </div>
+        </div>
+        <div class="sale-field">
+          <label class="sale-field-label"><i class="fa-solid fa-calendar"></i> As-of date</label>
+          <input type="date" id="as_of_date" class="sale-input">
+        </div>
+      </div>
+
+      <div class="items-section-header">
+        <div class="items-section-title"><i class="fa-solid fa-boxes-stacked"></i> Items</div>
+        <div class="items-action-bar">
+          <button type="button" class="custom-btn btn-add-item" id="add-item-btn"><i class="fa-solid fa-plus"></i> Add Item</button>
+        </div>
+      </div>
+
+      <div class="items-col-headers" style="grid-template-columns:minmax(180px,1.8fr) 120px 70px minmax(260px,2fr) 110px;">
+        <span class="col-header">Item Name</span>
+        <span class="col-header">Unit Cost</span>
+        <span class="col-header">Qty</span>
+        <span class="col-header">Serials + Comments</span>
+        <span class="col-header">Actions</span>
+      </div>
+
+      <p class="bulk-hint">
+        <i class="fa-solid fa-circle-info" style="color:#93c5fd;"></i>
+        Select an item, then add serials. Use "Bulk" to paste from Excel. Duplicates and stock conflicts are highlighted instantly.
+      </p>
+
+      <div id="items"></div>
+    </div>
+
+    <div class="sale-card-footer">
+      <div class="sale-totals-group">
+        <div class="total-chip"><span class="total-chip-label">Total Items</span><span class="total-chip-value" id="totalItemsCount">0</span></div>
+        <div class="total-chip"><span class="total-chip-label">Total Units</span><span class="total-chip-value" id="totalQtyCount">0</span></div>
+        <div class="total-chip"><span class="total-chip-label">Total Cost</span><span class="total-chip-value amount-value">PKR <span id="totalAmount">0.00</span></span></div>
+      </div>
+      <div class="sale-actions">
+        <button type="button" class="save-and-update-btn" id="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Opening Stock</button>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="os-card os-list-card">
+    <div class="os-card-head">
+      <h3><i class="fa-solid fa-list"></i> Opening Stock Loads</h3>
+      <button type="button" class="os-icon-btn" id="refresh-btn" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+    </div>
+    <div class="os-table-wrap">
+      <table class="os-table">
+        <thead><tr>
+          <th>Date</th><th>Vendor</th><th class="num">Items</th><th class="num">Units</th>
+          <th class="num">In stock</th><th class="num">Total cost</th><th></th>
+        </tr></thead>
+        <tbody id="loads-body"><tr><td colspan="7" class="os-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="os-modal-overlay" id="details-modal" style="display:none;">
+  <div class="os-modal">
+    <div class="os-modal-head">
+      <h3 id="details-title">Opening Stock</h3>
+      <button type="button" class="os-icon-btn" id="details-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="os-modal-body" id="details-body"></div>
+  </div>
+</div>
+
+<script>
+  window.OS_URLS = {
+    create:      "{% url 'opening_stock:create' %}",
+    list:        "{% url 'opening_stock:list' %}",
+    details:     "{% url 'opening_stock:details' %}",
+    checkSerials:"{% url 'opening_stock:check_serials' %}",
+    del:         "{% url 'opening_stock:delete' %}",
+    obeStatus:   "{% url 'opening_stock:obe_status' %}",
+    reclassify:  "{% url 'opening_stock:reclassify' %}",
+  };
+  window.OS_PERMS = { canDelete: {{ can_delete|yesno:"true,false" }}, canReclass: {{ can_reclass|yesno:"true,false" }} };
+  window.OS_AUTOCOMPLETE_ITEM_URL = "{% url 'items:autocomplete_item' %}";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/opening_stock_page.js' %}"></script>
+
+{% endblock body %}
