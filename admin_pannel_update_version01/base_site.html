@@ -8,6 +8,10 @@
 <link rel="stylesheet" href="{% static 'css/financee_admin.css' %}">
 {% endblock %}
 
+{% block responsive %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/financee_admin.css' %}">
+{% endblock %}
+
 {% block branding %}
 <div id="site-name" class="financee-brand">
   <span class="brand-mark"><i class="fa-solid fa-chart-pie"></i></span>
