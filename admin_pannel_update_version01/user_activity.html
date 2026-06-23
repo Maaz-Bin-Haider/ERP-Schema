@@ -1,0 +1,91 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/financee_admin.css' %}">{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a> &rsaquo; User Activity
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+  <div class="fin-kpi-grid">
+    <div class="fin-kpi">
+      <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+      <div><div class="kpi-val">{{ total_users }}</div><div class="kpi-label">Users Tracked</div></div>
+    </div>
+    <div class="fin-kpi amber">
+      <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div><div class="kpi-val">{{ total_actions }}</div><div class="kpi-label">Total Recorded Actions</div></div>
+    </div>
+    <div class="fin-kpi slate">
+      <div class="kpi-icon"><i class="fa-solid fa-database"></i></div>
+      <div><div class="kpi-val" style="font-size:1.05rem;">{{ schema }}</div><div class="kpi-label">Database Schema</div></div>
+    </div>
+  </div>
+
+  <h2 class="fin-section-title">User Activity Overview</h2>
+  <div class="fin-note">
+    Activity is aggregated from every record each user has created across the system
+    (items, parties, payments, receipts, invoices, returns, contra, opening cash &amp; owner equity),
+    plus admin-panel actions. Every user belongs to the
+    <span class="schema-chip"><i class="fa-solid fa-database"></i> {{ schema }}</span> schema.
+  </div>
+
+  <div class="fin-table-wrap">
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Groups</th>
+          <th>Schema</th>
+          <th>Total Actions</th>
+          <th>Admin Actions</th>
+          <th>Last Login</th>
+          <th>Last Activity</th>
+          <th>Joined</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>
+            <strong>{{ r.username }}</strong>
+            {% if r.full_name != "—" %}<div style="color:#64748b;font-size:0.74rem;">{{ r.full_name }}</div>{% endif %}
+            {% if r.email != "—" %}<div style="color:#94a3b8;font-size:0.72rem;">{{ r.email }}</div>{% endif %}
+          </td>
+          <td>
+            {% if r.role == "Superuser" %}<span class="pill pill-super"><i class="fa-solid fa-user-shield"></i> Superuser</span>
+            {% elif r.role == "Staff" %}<span class="pill pill-staff">Staff</span>
+            {% else %}<span class="pill pill-user">User</span>{% endif %}
+          </td>
+          <td>
+            {% if r.is_active %}<span class="pill pill-active">Active</span>{% else %}<span class="pill pill-inactive">Inactive</span>{% endif %}
+          </td>
+          <td style="color:#475569;">{{ r.groups }}</td>
+          <td><span class="pill pill-schema"><i class="fa-solid fa-database"></i> {{ r.schema }}</span></td>
+          <td><span class="pill pill-count">{{ r.total_actions }}</span></td>
+          <td style="color:#475569;">{{ r.admin_actions }}</td>
+          <td style="color:#475569;">{% if r.last_login %}{{ r.last_login|date:"d M Y, H:i" }}{% else %}<span style="color:#cbd5e1;">Never</span>{% endif %}</td>
+          <td style="color:#475569;">{% if r.last_activity %}{{ r.last_activity|date:"d M Y" }}{% else %}<span style="color:#cbd5e1;">—</span>{% endif %}</td>
+          <td style="color:#94a3b8;">{{ r.date_joined|date:"d M Y" }}</td>
+          <td><a class="fin-link" href="{% url 'admin:user_activity_detail' r.id %}">Details &rsaquo;</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="11" class="fin-empty">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

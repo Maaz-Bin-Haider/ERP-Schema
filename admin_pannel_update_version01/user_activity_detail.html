@@ -1,0 +1,108 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/financee_admin.css' %}">{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a> &rsaquo;
+  <a href="{% url 'admin:user_activity' %}">User Activity</a> &rsaquo;
+  {{ u.username }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+  <div class="fin-kpi-grid">
+    <div class="fin-kpi">
+      <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div><div class="kpi-val">{% if row %}{{ row.total_actions }}{% else %}0{% endif %}</div><div class="kpi-label">Total Recorded Actions</div></div>
+    </div>
+    <div class="fin-kpi violet">
+      <div class="kpi-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+      <div><div class="kpi-val">{% if row %}{{ row.admin_actions }}{% else %}0{% endif %}</div><div class="kpi-label">Admin Actions</div></div>
+    </div>
+    <div class="fin-kpi slate">
+      <div class="kpi-icon"><i class="fa-solid fa-database"></i></div>
+      <div><div class="kpi-val" style="font-size:1.05rem;">{{ schema }}</div><div class="kpi-label">Schema</div></div>
+    </div>
+  </div>
+
+  <div class="fin-detail-grid">
+
+    <!-- Profile + breakdown -->
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="fin-card">
+        <div class="fin-card-head"><i class="fa-solid fa-id-badge"></i> Profile</div>
+        <div class="fin-card-body">
+          <div class="fin-meta">
+            <span class="k">Username</span><span class="v">{{ u.username }}</span>
+            <span class="k">Full name</span><span class="v">{{ u.get_full_name|default:"—" }}</span>
+            <span class="k">Email</span><span class="v">{{ u.email|default:"—" }}</span>
+            <span class="k">Role</span><span class="v">
+              {% if u.is_superuser %}<span class="pill pill-super">Superuser</span>
+              {% elif u.is_staff %}<span class="pill pill-staff">Staff</span>
+              {% else %}<span class="pill pill-user">User</span>{% endif %}
+            </span>
+            <span class="k">Status</span><span class="v">{% if u.is_active %}<span class="pill pill-active">Active</span>{% else %}<span class="pill pill-inactive">Inactive</span>{% endif %}</span>
+            <span class="k">Groups</span><span class="v">{{ groups }}</span>
+            <span class="k">Schema</span><span class="v"><span class="pill pill-schema"><i class="fa-solid fa-database"></i> {{ schema }}</span></span>
+            <span class="k">Last login</span><span class="v">{% if u.last_login %}{{ u.last_login|date:"d M Y, H:i" }}{% else %}Never{% endif %}</span>
+            <span class="k">Joined</span><span class="v">{{ u.date_joined|date:"d M Y, H:i" }}</span>
+          </div>
+          <div style="margin-top:14px;">
+            <a class="button" href="{% url 'admin:auth_user_change' u.id %}"><i class="fa-solid fa-pen"></i> Edit user</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="fin-card">
+        <div class="fin-card-head"><i class="fa-solid fa-chart-simple"></i> Activity Breakdown</div>
+        <div class="fin-card-body">
+          {% if row and row.total_actions %}
+          <div class="fin-breakdown">
+            {% for b in breakdown %}
+            <div class="bd-row">
+              <span class="bd-label">{{ b.label }}</span>
+              <span class="bd-bar-wrap"><span class="bd-bar" style="width: {% widthratio b.count row.total_actions 100 %}%;"></span></span>
+              <span class="bd-val">{{ b.count }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="fin-empty">No records created by this user yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent admin actions -->
+    <div class="fin-card">
+      <div class="fin-card-head"><i class="fa-solid fa-clock-rotate-left"></i> Recent Admin Actions</div>
+      <div class="fin-card-body">
+        {% if recent_actions %}
+        <ul class="fin-actions-list">
+          {% for a in recent_actions %}
+          <li>
+            <span>
+              <span class="fin-act-flag {{ a.action }}">{{ a.action }}</span>
+              {{ a.object }}
+              {% if a.model %}<span style="color:#94a3b8;font-size:0.74rem;">({{ a.model }})</span>{% endif %}
+            </span>
+            <span class="act-time">{{ a.time|date:"d M Y, H:i" }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="fin-empty">No admin-panel actions recorded for this user.</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
