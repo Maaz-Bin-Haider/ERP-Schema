@@ -1,0 +1,232 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Purchase Invoice{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/purchasing_styling.css' %}">
+<style>
+  /* Purchase-specific serial wrapper overrides */
+  .serial-pair {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  .serial-pair input.sn {
+    flex: 0 0 160px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    padding: 6px 10px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    transition: all 0.18s;
+    background: #fff;
+    color: #111827;
+  }
+  .serial-pair input.sn:focus {
+    outline: none; border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+    background: #eff6ff;
+  }
+  .serial-pair input.sn.dup-self    { border-color: #f59e0b; background: #fffbeb; }
+  .serial-pair input.sn.dup-stock   { border-color: #dc2626; background: #fff1f2; }
+  .serial-pair input.sn.dup-existed { border-color: #9333ea; background: #fdf4ff; }
+  .serial-pair input.sn.dup-ok      { border-color: #10b981; background: #f0fdf4; }
+
+  .serial-pair input.cmt {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-style: italic;
+    color: #4b5563;
+    background: #f9fafb;
+    transition: border-color 0.18s;
+  }
+  .serial-pair input.cmt:focus {
+    outline: none; border-color: #2563eb;
+    background: #fff;
+  }
+
+  .serial-status-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tag-ok       { background:#dcfce7; color:#15803d; }
+  .tag-dup      { background:#fef9c3; color:#92400e; }
+  .tag-stock    { background:#fee2e2; color:#dc2626; }
+  .tag-existed  { background:#f3e8ff; color:#7e22ce; }
+
+  .item-locked-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.72rem; font-weight: 600;
+    background: #f0fdf4; color: #15803d;
+    border: 1.5px solid #bbf7d0; border-radius: 6px;
+    padding: 3px 8px; margin-left: 8px;
+  }
+
+  .bulk-hint {
+    font-size: 0.75rem; color: #9ca3af;
+    margin: 0 0 8px; display: flex; align-items: center; gap: 5px;
+  }
+</style>
+{% endblock SeperateCssFile %}
+
+{% block body %}
+<div class="sale-page-wrapper">
+
+  <!-- ── TOP ACTION BAR ── -->
+  <div class="sale-topbar">
+    <div class="sale-topbar-left">
+      <button type="button" class="custom-btn btn-topbar" onclick="purchaseHistory()">
+        <i class="fa-solid fa-clock-rotate-left"></i> Purchase History
+      </button>
+      <button type="button" class="custom-btn btn-topbar" onclick="purchaseDateWise()">
+        <i class="fa-solid fa-calendar-days"></i> By Date Range
+      </button>
+    </div>
+    <div class="sale-topbar-right">
+      <button type="button" class="btn-pdf" onclick="downloadInvoicePDF()" title="Download PDF">
+        <i class="fa-solid fa-file-pdf"></i> Download PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── INVOICE CARD ── -->
+  <div class="sale-card">
+
+    <!-- Card Header -->
+    <div class="sale-card-header">
+      <div class="sale-card-header-left">
+        <div class="sale-invoice-icon">📦</div>
+        <div>
+          <h2 class="sale-invoice-title">Purchase Invoice</h2>
+          <span class="sale-invoice-id-badge" id="invoiceIdBadge">#NEW</span>
+          <span id="entryByBadge" style="display:inline-flex;align-items:center;gap:5px;font-size:0.78rem;color:#6b7280;margin-left:10px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:2px 10px;">
+            <i class="fa-solid fa-user-pen" style="color:#9ca3af;font-size:0.7rem;"></i>
+            <span id="entryByName">—</span>
+          </span>
+        </div>
+      </div>
+      <div class="sale-nav-pills">
+        <button type="button" class="nav-pill-btn" onclick="navigatePurchase('previous')">
+          <i class="fa-solid fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="nav-pill-btn" onclick="navigatePurchase('next')">
+          Next <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card Body -->
+    <form onsubmit="buildAndSubmit(event)" id="purchaseForm">
+      <div class="sale-card-body">
+
+        <!-- Vendor + Date -->
+        <div class="sale-meta-grid">
+          <div class="sale-field-group">
+            <label class="sale-field-label"><i class="fa-solid fa-building"></i> Vendor / Party</label>
+            <div class="autocomplete-container">
+              <input type="text" id="search_name" name="search_name"
+                class="sale-input" placeholder="Search vendor name…"
+                autocomplete="off"
+                data-autocomplete-url="{% url 'parties:autocomplete_party' %}" required>
+              <div id="suggestions"></div>
+            </div>
+          </div>
+          <div class="sale-field-group">
+            <label class="sale-field-label"><i class="fa-solid fa-calendar"></i> Purchase Date</label>
+            <input type="date" id="purchase_date" name="purchase_date" class="sale-input">
+          </div>
+        </div>
+
+        <!-- Optional invoice description -->
+        <div class="sale-field-group" style="margin-top:14px;">
+          <label class="sale-field-label" for="purchase_description">
+            <i class="fa-solid fa-note-sticky"></i> Description <span style="opacity:.6;font-weight:400;">(optional)</span>
+          </label>
+          <textarea id="purchase_description" name="description" class="sale-input"
+                    rows="2" maxlength="1000" placeholder="Add a note for this invoice…"></textarea>
+        </div>
+
+        <div class="sale-divider"></div>
+
+        <!-- Items section -->
+        <div class="items-section-header">
+          <div class="items-section-title">
+            <div class="title-icon">📋</div>
+            Line Items
+          </div>
+          <div class="items-action-bar">
+            <button type="button" class="custom-btn btn-add-item" onclick="addItemRow()">
+              <i class="fa-solid fa-plus"></i> Add Item Row
+            </button>
+          </div>
+        </div>
+
+        <!-- Column headers -->
+        <div class="items-col-headers" style="grid-template-columns:minmax(180px,1.8fr) 120px 70px minmax(260px,2fr) 110px;">
+          <span class="col-header">Item Name</span>
+          <span class="col-header">Unit Price</span>
+          <span class="col-header">Qty</span>
+          <span class="col-header">Serials + Comments</span>
+          <span class="col-header">Actions</span>
+        </div>
+
+        <!-- Hint -->
+        <p class="bulk-hint">
+          <i class="fa-solid fa-circle-info" style="color:#93c5fd;"></i>
+          Select item name first, then add serials. Use "Bulk Paste" on each row for Excel paste.
+          Duplicates and stock conflicts are highlighted instantly.
+        </p>
+
+        <div id="items"></div>
+
+      </div><!-- /.sale-card-body -->
+
+      <input type="hidden" id="current_purchase_id" name="current_id" value="">
+
+      <!-- Footer: totals + actions -->
+      <div class="sale-card-footer">
+        <div class="sale-totals-group">
+          <div class="total-chip">
+            <span class="total-chip-label">Total Items</span>
+            <span class="total-chip-value" id="totalItemsCount">0</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-label">Total Qty</span>
+            <span class="total-chip-value" id="totalQtyCount">0</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-label">Invoice Amount</span>
+            <span class="total-chip-value amount-value">PKR <span id="totalAmount">0.00</span></span>
+          </div>
+        </div>
+        <div class="sale-actions">
+          <button type="submit" name="action" value="submit" class="save-and-update-btn" id="saveBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Purchase
+          </button>
+          <button type="submit" name="action" value="delete" class="delete-btn">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div><!-- /.sale-card -->
+
+</div><!-- /.sale-page-wrapper -->
+
+<script>
+  const autocompleteItemUrl = "{% url 'items:autocomplete_item' %}";
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/purchasing_script.js' %}"></script>
+{% endblock body %}

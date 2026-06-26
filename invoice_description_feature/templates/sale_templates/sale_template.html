@@ -1,0 +1,169 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Sale Invoice{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/purchasing_styling.css' %}">
+{% endblock SeperateCssFile %}
+
+{% block body %}
+<div class="sale-page-wrapper">
+
+  <!-- ── TOP ACTION BAR ── -->
+  <div class="sale-topbar">
+    <div class="sale-topbar-left">
+      <button type="button" class="custom-btn btn-topbar" onclick="saleHistory()">
+        <i class="fa-solid fa-clock-rotate-left"></i> Sale History
+      </button>
+      <button type="button" class="custom-btn btn-topbar" onclick="saleDateWise()">
+        <i class="fa-solid fa-calendar-days"></i> By Date Range
+      </button>
+    </div>
+    <div class="sale-topbar-right">
+      <button type="button" class="btn-pdf" onclick="downloadInvoicePDF()" title="Download current invoice as PDF">
+        <i class="fa-solid fa-file-pdf"></i> Download PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── INVOICE CARD ── -->
+  <div class="sale-card">
+
+    <!-- Card Header -->
+    <div class="sale-card-header">
+      <div class="sale-card-header-left">
+        <div class="sale-invoice-icon">🧾</div>
+        <div>
+          <h2 class="sale-invoice-title">Sale Invoice</h2>
+          <span class="sale-invoice-id-badge" id="invoiceIdBadge">#NEW</span>
+          <span id="entryByBadge" style="display:inline-flex;align-items:center;gap:5px;font-size:0.78rem;color:#6b7280;margin-left:10px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:2px 10px;">
+            <i class="fa-solid fa-user-pen" style="color:#9ca3af;font-size:0.7rem;"></i>
+            <span id="entryByName">—</span>
+          </span>
+        </div>
+      </div>
+      <div class="sale-nav-pills">
+        <button type="button" class="nav-pill-btn" onclick="navigateSale('previous')">
+          <i class="fa-solid fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="nav-pill-btn" onclick="navigateSale('next')">
+          Next <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card Body -->
+    <form onsubmit="buildAndSubmit(event)" id="saleForm">
+      <div class="sale-card-body">
+
+        <!-- Party + Date row -->
+        <div class="sale-meta-grid">
+          <div class="sale-field-group">
+            <label class="sale-field-label"><i class="fa-solid fa-user"></i> Customer / Party</label>
+            <div class="autocomplete-container">
+              <input
+                type="text"
+                id="search_name"
+                name="search_name"
+                class="sale-input"
+                placeholder="Search party name…"
+                autocomplete="off"
+                data-autocomplete-url="{% url 'parties:autocomplete_party' %}"
+                required
+              >
+              <div id="suggestions"></div>
+            </div>
+          </div>
+          <div class="sale-field-group">
+            <label class="sale-field-label"><i class="fa-solid fa-calendar"></i> Sale Date</label>
+            <input type="date" id="sale_date" name="sale_date" class="sale-input">
+          </div>
+        </div>
+
+        <!-- Optional invoice description -->
+        <div class="sale-field-group" style="margin-top:14px;">
+          <label class="sale-field-label" for="sale_description">
+            <i class="fa-solid fa-note-sticky"></i> Description <span style="opacity:.6;font-weight:400;">(optional)</span>
+          </label>
+          <textarea id="sale_description" name="description" class="sale-input"
+                    rows="2" maxlength="1000" placeholder="Add a note for this invoice…"></textarea>
+        </div>
+
+        <div class="sale-divider"></div>
+
+        <!-- Items section -->
+        <div class="items-section-header">
+          <div class="items-section-title">
+            <div class="title-icon">📦</div>
+            Line Items
+          </div>
+          <div class="items-action-bar">
+            <button type="button" class="custom-btn btn-add-item" onclick="addItemRow()">
+              <i class="fa-solid fa-plus"></i> Add Item Row
+            </button>
+            <button type="button" class="custom-btn btn-bulk" onclick="openBulkSerialsDialog()" title="Paste multiple serials from Excel or CSV">
+              <i class="fa-solid fa-list"></i> Bulk Paste Serials
+            </button>
+          </div>
+        </div>
+
+        <!-- Column headers (visible on large screens) -->
+        <div class="items-col-headers">
+          <span class="col-header">Item Name (auto-filled)</span>
+          <span class="col-header">Unit Price</span>
+          <span class="col-header">Qty</span>
+          <span class="col-header"></span>
+          <span class="col-header">Serial Numbers</span>
+          <span class="col-header">Actions</span>
+        </div>
+
+        <!-- Hint -->
+        <p style="font-size:0.78rem;color:#9ca3af;margin:0 0 12px;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-circle-info" style="color:#93c5fd;"></i>
+          Enter a serial number — item name fills automatically. Paste multiple serials at once from Excel.
+        </p>
+
+        <div id="items"></div>
+
+      </div><!-- /.sale-card-body -->
+
+      <!-- Hidden current sale ID -->
+      <input type="hidden" id="current_sale_id" name="current_id" value="">
+
+      <!-- Card Footer: totals + actions -->
+      <div class="sale-card-footer">
+        <div class="sale-totals-group">
+          <div class="total-chip">
+            <span class="total-chip-label">Total Items</span>
+            <span class="total-chip-value" id="totalItemsCount">0</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-label">Total Qty</span>
+            <span class="total-chip-value" id="totalQtyCount">0</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-label">Invoice Amount</span>
+            <span class="total-chip-value amount-value">PKR <span id="totalAmount">0.00</span></span>
+          </div>
+        </div>
+        <div class="sale-actions">
+          <button type="submit" name="action" value="submit" class="save-and-update-btn" id="saveBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Sale
+          </button>
+          <button type="submit" name="action" value="delete" class="delete-btn">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div><!-- /.sale-card -->
+
+</div><!-- /.sale-page-wrapper -->
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/sales_script.js' %}"></script>
+{% endblock body %}

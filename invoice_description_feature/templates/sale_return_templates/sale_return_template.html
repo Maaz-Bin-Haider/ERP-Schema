@@ -1,0 +1,266 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Sale Return{% endblock title %}
+
+{% block SeperateCssFile %}
+<link rel="stylesheet" href="{% static 'css/purchasing_styling.css' %}">
+<style>
+  /* ── Return-page accent: amber/orange header to visually distinguish from Sale ── */
+  .sale-card-header {
+    background: linear-gradient(135deg, #92400e 0%, #d97706 100%);
+  }
+
+  /* Serial rows for return page */
+  .return-serial-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .return-serial-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    background: #f9fafb;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 14px;
+    animation: rowSlideIn 0.2s ease;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+
+  .return-serial-row:focus-within {
+    border-color: #fcd34d;
+    box-shadow: 0 0 0 3px rgba(217,119,6,0.08);
+    background: #fff;
+  }
+
+  .return-serial-row input {
+    padding: 9px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 9px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.87rem;
+    color: #111827;
+    background: #fff;
+    width: 100%;
+    transition: all 0.18s;
+    outline: none;
+  }
+
+  .return-serial-row input:focus {
+    border-color: #d97706;
+    box-shadow: 0 0 0 2px rgba(217,119,6,0.12);
+    background: #fffbeb;
+  }
+
+  .return-serial-row input[readonly] {
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: default;
+  }
+
+  .return-serial-row input.serial-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.84rem;
+    letter-spacing: 0.02em;
+  }
+
+  .return-serial-row input.serial-valid {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+
+  .return-row-remove {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid #fecaca;
+    background: #fff;
+    color: #dc2626;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.18s;
+  }
+  .return-row-remove:hover { background: #fee2e2; border-color: #dc2626; transform: scale(1.1); }
+
+  /* Column header labels */
+  .return-col-headers {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1fr auto;
+    gap: 10px;
+    padding: 0 14px 4px;
+  }
+  .return-col-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #9ca3af;
+  }
+
+  @media (max-width: 700px) {
+    .return-serial-row { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+    .return-serial-row input.serial-input { grid-column: 1 / -1; }
+    .return-row-remove { grid-column: 1; }
+    .return-col-headers { display: none; }
+  }
+</style>
+{% endblock SeperateCssFile %}
+
+{% block body %}
+<div class="sale-page-wrapper">
+
+  <!-- ── TOP ACTION BAR ── -->
+  <div class="sale-topbar">
+    <div class="sale-topbar-left">
+      <button type="button" class="custom-btn btn-topbar" onclick="saleReturnHistory()">
+        <i class="fa-solid fa-clock-rotate-left"></i> Return History
+      </button>
+      <button type="button" class="custom-btn btn-topbar" onclick="saleReturnDateWise()">
+        <i class="fa-solid fa-calendar-days"></i> By Date Range
+      </button>
+    </div>
+    <div class="sale-topbar-right">
+      <button type="button" class="btn-pdf" onclick="downloadReturnPDF()" title="Download current return as PDF">
+        <i class="fa-solid fa-file-pdf"></i> Download PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- ── INVOICE CARD ── -->
+  <div class="sale-card">
+
+    <!-- Card Header -->
+    <div class="sale-card-header">
+      <div class="sale-card-header-left">
+        <div class="sale-invoice-icon">↩️</div>
+        <div>
+          <h2 class="sale-invoice-title">Sale Return</h2>
+          <span class="sale-invoice-id-badge" id="invoiceIdBadge">#NEW</span>
+          <span id="entryByBadge" style="display:inline-flex;align-items:center;gap:5px;font-size:0.78rem;color:rgba(255,255,255,0.75);margin-left:10px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.22);border-radius:20px;padding:2px 10px;">
+            <i class="fa-solid fa-user-pen" style="font-size:0.7rem;"></i>
+            <span id="entryByName">—</span>
+          </span>
+        </div>
+      </div>
+      <div class="sale-nav-pills">
+        <button type="button" class="nav-pill-btn" onclick="navigateSaleReturn('previous')">
+          <i class="fa-solid fa-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="nav-pill-btn" onclick="navigateSaleReturn('next')">
+          Next <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card Body -->
+    <form id="saleReturnForm" onsubmit="submitSaleReturn(event)">
+      <div class="sale-card-body">
+
+        <!-- Party + Date row -->
+        <div class="sale-meta-grid">
+          <div class="sale-field-group">
+            <label class="sale-field-label"><i class="fa-solid fa-user"></i> Customer / Party</label>
+            <div class="autocomplete-container">
+              <input
+                type="text"
+                id="search_name"
+                name="search_name"
+                class="sale-input"
+                placeholder="Search customer name…"
+                autocomplete="off"
+                data-autocomplete-url="{% url 'parties:autocomplete_party' %}"
+                required
+              >
+              <div id="suggestions"></div>
+            </div>
+          </div>
+          <div class="sale-field-group">
+            <label class="sale-field-label"><i class="fa-solid fa-calendar"></i> Return Date</label>
+            <input type="date" id="return_date" name="return_date" class="sale-input">
+          </div>
+        </div>
+
+        <!-- Optional invoice description -->
+        <div class="sale-field-group" style="margin-top:14px;">
+          <label class="sale-field-label" for="sale_return_description">
+            <i class="fa-solid fa-note-sticky"></i> Description <span style="opacity:.6;font-weight:400;">(optional)</span>
+          </label>
+          <textarea id="sale_return_description" name="description" class="sale-input"
+                    rows="2" maxlength="1000" placeholder="Add a note for this return…"></textarea>
+        </div>
+
+        <div class="sale-divider"></div>
+
+        <!-- Serials Section -->
+        <div class="items-section-header">
+          <div class="items-section-title">
+            <div class="title-icon">🔢</div>
+            Serial Numbers to Return
+          </div>
+          <div class="items-action-bar">
+            <button type="button" class="custom-btn btn-add-item" onclick="addSerial()">
+              <i class="fa-solid fa-plus"></i> Add Serial
+            </button>
+          </div>
+        </div>
+
+        <!-- Column headers -->
+        <div class="return-col-headers">
+          <span class="return-col-label">Serial Number</span>
+          <span class="return-col-label">Item Name</span>
+          <span class="return-col-label">Price</span>
+          <span class="return-col-label"></span>
+        </div>
+
+        <p style="font-size:0.78rem;color:#9ca3af;margin:0 0 12px;display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-circle-info" style="color:#fcd34d;"></i>
+          Enter a serial number — item name and price will fill automatically from the original sale.
+        </p>
+
+        <div class="return-serial-section" id="serials"></div>
+
+      </div><!-- /.sale-card-body -->
+
+      <!-- Hidden return ID -->
+      <input type="hidden" id="current_return_id" value="{{ return_id }}">
+
+      <!-- Card Footer -->
+      <div class="sale-card-footer">
+        <div class="sale-totals-group">
+          <div class="total-chip">
+            <span class="total-chip-label">Total Serials</span>
+            <span class="total-chip-value" id="totalQty">0</span>
+          </div>
+          <div class="total-chip">
+            <span class="total-chip-label">Return Amount</span>
+            <span class="total-chip-value amount-value">PKR <span id="totalReturnAmount">0.00</span></span>
+          </div>
+        </div>
+        <div class="sale-actions">
+          <button type="submit" name="action" value="submit" class="save-and-update-btn" id="saveBtn">
+            <i class="fa-solid fa-floppy-disk"></i> Save Return
+          </button>
+          <button type="submit" name="action" value="delete" class="delete-btn" id="deleteBtn">
+            <i class="fa-solid fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div><!-- /.sale-card -->
+
+</div><!-- /.sale-page-wrapper -->
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="{% static 'js/sale_return_script.js' %}"></script>
+{% endblock body %}
